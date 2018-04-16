@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/spf13/viper"
-	"io/ioutil"
-	"path/filepath"
+	"github.com/BurntSushi/toml"
+	"path"
 	"os"
+	"io/ioutil"
 )
 
 type ConfigLog struct {
@@ -20,27 +20,17 @@ type ConfigServer struct {
 }
 
 type ConfigServerHttp struct {
-	Enable bool
 	Host string
 	Port uint32
 }
 
 type ConfigServerSock struct {
-	Enable bool
 	File   string
 	Chmod  string
 	Chown  string
 }
 
-type ConfigInclude struct {
-	Directory string
-}
-
-type ConfigProgram struct {
-	Name string
-	Group string
-	Cmd string
-	Args []string
+type ConfigTaskShared struct {
 	Environment map[string]string
 	Autostart bool
 	Instances uint
@@ -49,60 +39,86 @@ type ConfigProgram struct {
 	Retries uint
 	Delay uint
 	Stopsignal string
-	Stoptimeout string
+	Stoptimeout uint
 	Runuser string
 	Rungroup string
+}
+
+type ConfigTasks struct {
+	ConfigTaskShared
+	Info string
+	Group string
+	Cmd string
+	Args []string
+}
+
+type ConfigTask struct {
+	ConfigTaskShared
+	Subdir string
 }
 
 type Config struct {
 	Log ConfigLog
 	Server ConfigServer
-	Include ConfigInclude
-	Programs []ConfigProgram
+	Task ConfigTask
+	Tasks []ConfigTasks
 }
 
-func ReadConfig(name string, paths []string) (*Config, error) {
-	var cfg Config
+const DefaultLogPath = "gogo.log"
+const DefaultLogLevel = "info"
+const DefaultServerUsername = "gogo"
+const DefaultServerPassword = "{sha256}65B63136D9BA9D576B7DEF9DE5B767A1B4F513A992F316A50B3F548375638078"
+const DefaultServerHttpHost = "localhost"
+const DefaultServerHttpPort = 8181
 
-	vpr := viper.New()
-
-	vpr.SetConfigName(name)
-
-	if len(paths) < 1 {
-		paths = []string{".", string(os.PathSeparator) + "etc" + string(os.PathSeparator) + "gogo"}
+func defaultConfig(c *Config) {
+	c.Log = ConfigLog{
+		Path: DefaultLogPath,
+		Level: DefaultLogLevel,
 	}
-	for _, a := range paths {
-		vpr.AddConfigPath(a)
+	c.Server = ConfigServer{
+		Username: DefaultServerUsername,
+		Password: DefaultServerPassword,
+		Http: ConfigServerHttp{
+			Host: DefaultServerHttpHost,
+			Port: DefaultServerHttpPort,
+		},
 	}
+}
 
-	err := vpr.ReadInConfig()
-
-	if err != nil {
-		return nil, err
-	}
-
-	vpr.Unmarshal(&cfg)
-
-	cfgDir := filepath.Dir(vpr.ConfigFileUsed())
-
-	dir := cfg.Include.Directory
-	programsDir := filepath.Clean(cfgDir + string(os.PathSeparator) + dir) + string(os.PathSeparator)
-	dirList, err := ioutil.ReadDir(programsDir)
+func ReadConfig(filePath string) (Config, error) {
+	cfg := Config{}
+	defaultConfig(&cfg)
+	_, err := toml.DecodeFile(filePath, &cfg)
 	if err != nil {
 		panic(err)
 	}
-	for _, f := range dirList {
-		if f.IsDir() {
-			continue
+	cfgPath := path.Dir(filePath)
+	if cfg.Task.Subdir != "" {
+		d := path.Clean(cfgPath + string(os.PathSeparator) + cfg.Task.Subdir)
+		if DirExists(d) {
+			dirList, err := ioutil.ReadDir(d)
+			if err != nil {
+				panic(err)
+			}
+			for _, l := range dirList {
+				if l.IsDir() {
+					continue
+				}
+				f := d + string(os.PathSeparator) + l.Name()
+				if !FileExists(f) {
+					continue
+				}
+				var subCfg Config
+				_, err := toml.DecodeFile(f, &subCfg)
+				if err != nil {
+					panic(err)
+				}
+				for _, v := range subCfg.Tasks {
+					cfg.Tasks = append(cfg.Tasks, v)
+				}
+			}
 		}
-		pCfg := ConfigProgram{}
-		pPath := programsDir + f.Name()
-		pVpr := viper.New()
-		pVpr.SetConfigFile(pPath)
-		pVpr.ReadInConfig()
-		pVpr.Unmarshal(&pCfg)
-		cfg.Programs = append(cfg.Programs, pCfg)
 	}
-
-	return &cfg, nil
+	return cfg, nil
 }

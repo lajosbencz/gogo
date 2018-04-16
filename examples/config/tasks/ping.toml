@@ -2,7 +2,8 @@
 ## Injectable variables:
 #   - %{proc} Index of the process
 
-name = ""
+[[tasks]]
+info = ""
 group = "simple"
 cmd = "ping"
 args = ["google.com", "-n", "100"]

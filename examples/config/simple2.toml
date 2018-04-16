@@ -1,0 +1,10 @@
+[log]
+    level   = "debug"
+
+[server]
+    username    = "user"
+    password    = "{md5}c409156145c8d809a986af4cf96f06bd"
+
+[[tasks]]
+    cmd="ping"
+    args=["google.com", "-n", "7"]

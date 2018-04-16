@@ -1,0 +1,10 @@
+[log]
+    level   = "info"
+
+[server]
+    username    = "admin"
+    password    = "verytopsecret"
+
+[[tasks]]
+    cmd="ping"
+    args=["google.com", "-n", "5"]

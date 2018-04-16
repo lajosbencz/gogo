@@ -7,15 +7,24 @@
     password    = "verytopsecret"
 
     [server.http]
-        enable  = true
         host    = "localhost"
         port    = 8181
 
     [server.sock]
-        enable  = false
         file    = "/var/run/gogo.sock"
         chmod   = "0777"
         chown   = "root:root"
 
-[include]
-    directory   = "programs/"
+[task]
+    environment = { foo = "Bar" }
+    autostart = true
+    instances = 1
+    priority = 999
+    settle = 3
+    retries = 5
+    delay = 5
+    stopsignal = "TERM"
+    stoptimeout = 5
+    runuser = "root"
+    rungroup = "root"
+    subdir = "tasks"
