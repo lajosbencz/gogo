@@ -1,0 +1,16 @@
+
+name = "ipconfig task"
+group = "simple"
+cmd = "ipconfig"
+args = []
+environment = {Foo="Bar"}
+autostart = true
+instances = 1
+priority = 999
+settle = 3 #seconds
+retries = 5
+delay = 5
+stopsignal = "TERM"
+stoptimeout = 5
+runuser = "root"
+rungroup = "root"

@@ -1,0 +1,19 @@
+
+## Injectable variables:
+#   - %{proc} Index of the process
+
+name = ""
+group = "simple"
+cmd = "ping"
+args = ["google.com", "-n", "100"]
+environment = { foo = "Bar" }
+autostart = true
+instances = 1
+priority = 999
+settle = 3 #seconds
+retries = 5
+delay = 5
+stopsignal = "TERM"
+stoptimeout = 5
+runuser = "root"
+rungroup = "root"

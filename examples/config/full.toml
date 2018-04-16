@@ -1,0 +1,21 @@
+[log]
+    path    = "gogo.log"
+    level   = "debug"
+
+[server]
+    username    = "admin"
+    password    = "verytopsecret"
+
+    [server.http]
+        enable  = true
+        host    = "localhost"
+        port    = 8181
+
+    [server.sock]
+        enable  = false
+        file    = "/var/run/gogo.sock"
+        chmod   = "0777"
+        chown   = "root:root"
+
+[include]
+    directory   = "programs/"
