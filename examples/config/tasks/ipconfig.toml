@@ -1,5 +1,5 @@
 
-[[tasks]]
+[tasks.ipconfig]
 group = "simple"
 cmd = "ipconfig"
 args = []

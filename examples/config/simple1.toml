@@ -5,6 +5,6 @@
     username    = "admin"
     password    = "verytopsecret"
 
-[[tasks]]
+[tasks.ping5]
     cmd="ping"
     args=["google.com", "-n", "5"]

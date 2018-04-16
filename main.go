@@ -3,10 +3,15 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"github.com/apex/log"
 	"github.com/apex/log/handlers/multi"
 	"github.com/apex/log/handlers/text"
+	"flag"
+	"crypto/sha256"
+	"encoding/hex"
+	"crypto/md5"
+	"crypto/sha1"
+	"crypto/sha512"
 )
 
 func usage() {
@@ -15,31 +20,69 @@ func usage() {
 
 
 func main() {
-	logHandlers := multi.New(text.New(os.Stdout))
-	log.SetLevel(log.DebugLevel)
-	log.SetHandler(logHandlers)
 
-	binary, err := exec.LookPath("ping")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Resolved binary: " + binary)
-	cmd := exec.Command(binary, "google.com", "-n", "3")
-	output, err := cmd.Output()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(string(output))
+	s := []byte("secret")
+	h := md5.New()
+	h.Write(s)
+	fmt.Println("md5: " + hex.EncodeToString(h.Sum(nil)))
+	h = sha1.New()
+	h.Write(s)
+	fmt.Println("sha1: " + hex.EncodeToString(h.Sum(nil)))
+	h = sha256.New()
+	h.Write(s)
+	fmt.Println("sha256: " + hex.EncodeToString(h.Sum(nil)))
+	h = sha512.New()
+	h.Write(s)
+	fmt.Println("sha512: " + hex.EncodeToString(h.Sum(nil)))
+	return
 
-	/*
 	var cfgPath string
 	fs := flag.NewFlagSet("gogo", flag.ExitOnError)
 	fs.StringVar(&cfgPath, "c", "gogo.toml", "Path config file")
 	fs.Usage = usage
 	if err := fs.Parse(os.Args[1:]); err != nil {
-		log.Fatal(err)
+		usage()
 		os.Exit(1)
 	}
+
+	cfg, err := ReadConfig(cfgPath)
+
+	if err != nil {
+		panic(err)
+	}
+
+	if cfg.Log.Path != "" {
+		fw, err := os.Open(cfg.Log.Path)
+		defer fw.Close()
+		if err != nil {
+			panic(err)
+		}
+		th := text.New(fw)
+		logHandlers := multi.New(text.New(os.Stdout), th)
+		log.SetHandler(logHandlers)
+	} else {
+		logHandlers := multi.New(text.New(os.Stdout))
+		log.SetHandler(logHandlers)
+	}
+
+	switch cfg.Log.Level {
+	case "debug":
+		log.SetLevel(log.DebugLevel)
+	case "info":
+		log.SetLevel(log.InfoLevel)
+	case "warn":
+		log.SetLevel(log.WarnLevel)
+	case "", "error":
+		log.SetLevel(log.DebugLevel)
+	case "fatal":
+		log.SetLevel(log.FatalLevel)
+	}
+
+	manager := Manager{Config: cfg}
+	manager.Run()
+
+
+	/*
 
 	cfgBase, cfgFile := path.Split(cfgPath)
 

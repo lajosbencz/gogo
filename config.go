@@ -44,7 +44,7 @@ type ConfigTaskShared struct {
 	Rungroup string
 }
 
-type ConfigTasks struct {
+type ConfigTaskItem struct {
 	ConfigTaskShared
 	Info string
 	Group string
@@ -61,13 +61,13 @@ type Config struct {
 	Log ConfigLog
 	Server ConfigServer
 	Task ConfigTask
-	Tasks []ConfigTasks
+	Tasks map[string]ConfigTaskItem
 }
 
 const DefaultLogPath = "gogo.log"
 const DefaultLogLevel = "info"
 const DefaultServerUsername = "gogo"
-const DefaultServerPassword = "{sha256}65B63136D9BA9D576B7DEF9DE5B767A1B4F513A992F316A50B3F548375638078"
+const DefaultServerPassword = "{sha256}2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b"
 const DefaultServerHttpHost = "localhost"
 const DefaultServerHttpPort = 8181
 
@@ -84,6 +84,7 @@ func defaultConfig(c *Config) {
 			Port: DefaultServerHttpPort,
 		},
 	}
+	c.Tasks = make(map[string]ConfigTaskItem)
 }
 
 func ReadConfig(filePath string) (Config, error) {
@@ -109,13 +110,16 @@ func ReadConfig(filePath string) (Config, error) {
 				if !FileExists(f) {
 					continue
 				}
+				if path.Ext(f) != ".toml" {
+					continue
+				}
 				var subCfg Config
 				_, err := toml.DecodeFile(f, &subCfg)
 				if err != nil {
 					panic(err)
 				}
-				for _, v := range subCfg.Tasks {
-					cfg.Tasks = append(cfg.Tasks, v)
+				for k, v := range subCfg.Tasks {
+					cfg.Tasks[k] = v
 				}
 			}
 		}

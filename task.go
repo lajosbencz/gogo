@@ -16,26 +16,13 @@ const (
 
 type Task struct {
 	Key string
+	Instance uint
 	Pid int
 	Since time.Time
 	Status int
 	Retries uint
-	Config ConfigTasks
 	Cmd *exec.Cmd
-}
-
-func NewTask(key string, cfg ConfigTasks) Task {
-	cmd := exec.Command(cfg.Cmd, cfg.Args...)
-	p := Task{
-		Key: key,
-		Pid: cmd.Process.Pid,
-		Status: TaskStatusStopped,
-		Retries: 0,
-		Since: nil,
-		Config: cfg,
-		Cmd: cmd,
-	}
-	return p
+	Config *ConfigTaskItem
 }
 
 func (p *Task) Start() error {

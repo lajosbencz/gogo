@@ -5,6 +5,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"hash"
+	"crypto/md5"
+	"crypto/sha1"
+	"crypto/sha256"
+	"crypto/sha512"
+	"errors"
+	"encoding/hex"
 )
 
 type FmtArgs map[string]interface{}
@@ -55,4 +62,28 @@ func FileExists(filePath string) bool {
 func DirExists(dirPath string) bool {
 	exists, stat := PathInfo(dirPath)
 	return exists && stat.IsDir()
+}
+
+func CheckHash(raw string, etalon string) (bool, error) {
+	var hr hash.Hash
+	if etalon[:5] == "{md5}" {
+		hr = md5.New()
+		etalon = etalon[5:]
+	} else if etalon[:5] == "{sha}" {
+		hr = sha1.New()
+		etalon = etalon[5:]
+	} else if etalon[:6] == "{sha1}" {
+		hr = sha1.New()
+		etalon = etalon[6:]
+	} else if etalon[:8] == "{sha256}" {
+		hr = sha256.New()
+		etalon = etalon[8:]
+	} else if etalon[:8] == "{sha512}" {
+		hr = sha512.New()
+		etalon = etalon[8:]
+	} else {
+		return false, errors.New("invalid hasher prefix")
+	}
+	hr.Write([]byte(raw))
+	return hex.EncodeToString(hr.Sum(nil)) == etalon, nil
 }

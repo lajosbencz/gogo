@@ -3,7 +3,6 @@ package main
 import (
 	"testing"
 	"os"
-	"strconv"
 )
 
 func TestDefaultConfig(t *testing.T) {
@@ -65,7 +64,7 @@ func TestConfig(t *testing.T) {
 	} else {
 		for k,v := range cfg.Tasks {
 			if v.Cmd == "" {
-				t.Fatal("tasks[" + strconv.Itoa(k) + "].cmd")
+				t.Fatal("tasks[" + k + "].cmd")
 			}
 		}
 	}
